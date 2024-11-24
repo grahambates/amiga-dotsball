@@ -113,5 +113,5 @@ $(elf_linked): $(elf_objects)
 
 .PHONY: all clean dist run run-dist run-adf run-vamiga run-vamiga-dist run-vamiga-adf
 
-table.bin data.asm: gendata.js
-	node $< > data.asm
+table.bin draw.asm: gendata.js
+	node $< > draw.asm

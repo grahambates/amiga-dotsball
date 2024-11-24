@@ -1,6 +1,6 @@
 const fs = require('fs')
 
-const dotsPerLine = 13
+const dotsPerLine = 12
 const W = 256
 const H = 256
 const R = W / 2
