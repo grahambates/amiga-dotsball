@@ -1,6 +1,6 @@
 const fs = require('fs')
 
-const dotsPerLine = 12
+const dotsPerLine = 10
 const W = 256
 const H = 256
 const R = W / 2
@@ -20,7 +20,7 @@ function initCode() {
   for (let y = 0; y < H; y++) {
     const lineAngles = []
     angles.push(lineAngles)
-    for (let i = 0; i < dotsPerLine; i++) {
+    for (let i = 0; i < dotsPerLine - Math.random() * 2; i++) {
       lineAngles.push(
         Math.floor(Math.random() * SIN_LEN)
       )
