@@ -1,6 +1,6 @@
 const fs = require('fs')
 
-const dotsPerLine = 10
+const dotsPerLine = 20
 const W = 256
 const H = 256
 const R = W / 2
@@ -17,10 +17,10 @@ function initCode() {
   const angles = []
 
   // Generate random dot angles per line
-  for (let y = 0; y < H; y++) {
+  for (let y = 0; y < H / 2; y++) {
     const lineAngles = []
     angles.push(lineAngles)
-    for (let i = 0; i < dotsPerLine - Math.random() * 2; i++) {
+    for (let i = 0; i < dotsPerLine - Math.random() * 1.5; i++) {
       lineAngles.push(
         Math.floor(Math.random() * SIN_LEN)
       )
@@ -46,16 +46,16 @@ function initCode() {
     console.log(` adda.w d2,a0`)
   }
 
-  // Descending order for bottom half of screen
-  for (let j = R - 2; j >= 0; j--) {
-    console.log(` suba.w d2,a0`)
-    angles[i++].forEach(doAngle)
-    o += 32
-    if (o === 128) {
-      o = 0
-      console.log(` adda.w d3,a1`)
-    }
-  }
+  // // Descending order for bottom half of screen
+  // for (let j = R - 2; j >= 0; j--) {
+  //   console.log(` suba.w d2,a0`)
+  //   angles[i++].forEach(doAngle)
+  //   o += 32
+  //   if (o === 128) {
+  //     o = 0
+  //     console.log(` adda.w d3,a1`)
+  //   }
+  // }
   console.log('; ' + count)
 }
 
@@ -82,7 +82,7 @@ function initTbl() {
       // Additional offset for back facing dots
       if (angle > Math.PI * 0.5 && angle < Math.PI * 1.5) {
         // Bitplane size
-        byteOffset += 256 * 256 / 8
+        byteOffset += 256 / 2 * 256 / 8
       }
       const bitToSet = (~v) & 7
 

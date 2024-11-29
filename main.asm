@@ -10,7 +10,7 @@ _start:
 * Constants:
 ********************************************************************************
 
-BUFFER_COUNT = 20
+BUFFER_COUNT = 30
 
 ; Display window:
 DIW_W = 256
@@ -38,9 +38,9 @@ SCREEN_MOD = SCREEN_BW*(BPLS-1)		; modulo (interleaved)
 SCREEN_BPL = SCREEN_BW			; bitplane offset (interleaved)
 		else
 SCREEN_MOD = 0				; modulo (non-interleaved)
-SCREEN_BPL = SCREEN_BW*SCREEN_H		; bitplane offset (non-interleaved)
+SCREEN_BPL = SCREEN_BW*SCREEN_H/2	; bitplane offset (non-interleaved)
 		endc
-SCREEN_SIZE = SCREEN_BW*SCREEN_H*BPLS	; byte size of screen buffer
+SCREEN_SIZE = SCREEN_BW*SCREEN_H*BPLS/2	; byte size of screen buffer
 
 DIW_BW = DIW_W/16*2
 DIW_MOD = SCREEN_BW-DIW_BW+SCREEN_MOD-SCROLL*2
@@ -91,7 +91,7 @@ Clear:
 		clr.w	bltdmod(a6)
 		move.l	#$01000000,bltcon0(a6)
 		move.l	ClearScreen(pc),bltdpt(a6)
-		move.w	#SCREEN_H*BPLS*64+SCREEN_BW/2,bltsize(a6)
+		move.w	#SCREEN_H/2*BPLS*64+SCREEN_BW/2,bltsize(a6)
 		rts
 
 
@@ -124,22 +124,17 @@ SwapBuffers:
 
 		move.l	a1,d0
 
-		move.l	d0,d1
-		sub.l	#SCREEN_SIZE*9,d1
-		cmp.l	#Screens,d1
-		bge	.ok4
-		add.l	#SCREEN_SIZE*BUFFER_COUNT,d1
-.ok4:
-
-		move.l	d0,d2
-		sub.l	#SCREEN_SIZE*17,d2
-		cmp.l	#Screens,d2
-		bge	.ok5
-		add.l	#SCREEN_SIZE*BUFFER_COUNT,d2
-.ok5:
-
 ; Set bpl pointers in copper:
 		lea	CopBplPt+2,a0
+
+OffsetFrame	macro
+		move.l	d0,\1
+		sub.l	#SCREEN_SIZE*\2,\1
+		cmp.l	#Screens,\1
+		bge	.ok\@
+		add.l	#SCREEN_SIZE*BUFFER_COUNT,\1
+.ok\@:
+		endm
 
 PokeBplPair	macro
 		move.w	\1,4(a0)	; lo
@@ -153,6 +148,21 @@ PokeBplPair	macro
 		move.w	\1,(a0)		; hi
 		lea	8(a0),a0
 		endm
+
+		OffsetFrame d1,9
+		OffsetFrame d2,17
+
+		PokeBplPair d0
+		PokeBplPair d1
+		PokeBplPair d2
+
+		lea	CopBplPt2+2,a0
+
+		move.l	a1,d0
+		add.l	#SCREEN_BPL-DIW_BW*2,d0
+
+		OffsetFrame d1,15
+		OffsetFrame d2,25
 
 		PokeBplPair d0
 		PokeBplPair d1
@@ -229,7 +239,7 @@ COL_BACK = $e19
 Cop:
 		dc.w	fmode,0
 		dc.w	diwstrt,DIW_YSTRT<<8!DIW_XSTRT
-		dc.w	diwstop,(DIW_YSTOP-256)<<8!(DIW_XSTOP-256)
+		dc.w	diwstop,(DIW_YSTOP-256-1)<<8!(DIW_XSTOP-256)
 		dc.w	ddfstrt,(DIW_XSTRT-17)>>1&$fc
 		dc.w	ddfstop,(DIW_XSTRT-17+(DIW_W>>4-1)<<4)>>1&$fc-SCROLL*8
 		dc.w	bpl1mod,DIW_MOD
@@ -261,6 +271,7 @@ CopPal:
 		dc.w	color13,COL_FRONT
 		dc.w	color14,COL_FRONT
 		dc.w	color15,COL_FRONT
+		incbin	logo.COP
 
 BACKCOL		macro
 		dc.w	color01,\1 
@@ -389,6 +400,12 @@ Gradient:
 		BACKCOL	$65a
 		dc.w	$a307,$fffe
 		BACKCOL	$55a
+		dc.w	$abd1,$fffe
+CopBplPt2:	rept	6*2
+		dc.w	bpl0pt+REPTN*2,0
+		endr
+		dc.w	bpl1mod,-SCREEN_BW*2
+		dc.w	bpl2mod,-SCREEN_BW*2
 		dc.w	$af07,$fffe
 		BACKCOL	$65a
 		dc.w	$b007,$fffe
@@ -512,7 +529,6 @@ Gradient:
 		BACKCOL	$e19
 		dc.w	$2a07,$fffe
 		BACKCOL	$f19
-		incbin	logo.COP
 		dc.l	-2
 CopE:
 
